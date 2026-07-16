@@ -26,13 +26,24 @@ export async function GET(request) {
     }
   }
 
-  const [failover, mains, leaseRows] = await Promise.all([
-    state.getFailoverState(),
-    state.loadMains(),
-    sql`SELECT leader_server_id, lease_until, promoted_at,
-               (lease_until > now()) AS lease_live
-          FROM cluster_leader WHERE singleton = 1`,
-  ]);
+  let failover;
+  let mains;
+  let leaseRows;
+  try {
+    [failover, mains, leaseRows] = await Promise.all([
+      state.getFailoverState(),
+      state.loadMains(),
+      sql`SELECT leader_server_id, lease_until, promoted_at,
+                 (lease_until > now()) AS lease_live
+            FROM cluster_leader WHERE singleton = 1`,
+    ]);
+  } catch (err) {
+    console.error(`[watchdog] status database lookup failed: ${err.message}`);
+    return NextResponse.json(
+      { error: "watchdog database unavailable" },
+      { status: 503 }
+    );
+  }
 
   const describe = (m) =>
     m && {

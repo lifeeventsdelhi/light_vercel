@@ -30,7 +30,16 @@ export async function POST(request) {
     return NextResponse.json({ error: "server_id and key are required" }, { status: 400 });
   }
 
-  const server = await state.verifyServer(serverId, key);
+  let server;
+  try {
+    server = await state.verifyServer(serverId, key);
+  } catch (err) {
+    console.error(`[watchdog] server verification failed: ${err.message}`);
+    return NextResponse.json(
+      { error: "watchdog database unavailable" },
+      { status: 503 }
+    );
+  }
   if (!server) {
     console.warn(`[watchdog] rejected ping from '${serverId}' (unknown/disabled/bad key)`);
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -40,15 +49,14 @@ export async function POST(request) {
     return NextResponse.json({ error: "main server role required" }, { status: 403 });
   }
 
-  await state.recordPing(serverId);
-
   let activeMain;
   try {
+    await state.recordPing(serverId);
     activeMain = await state.evaluate(server.role);
   } catch (err) {
-    console.error(`[watchdog] evaluate failed: ${err.message}`);
+    console.error(`[watchdog] ping processing failed: ${err.message}`);
     return NextResponse.json(
-      { error: "failover evaluation failed" },
+      { error: "watchdog database unavailable" },
       { status: 503 }
     );
   }

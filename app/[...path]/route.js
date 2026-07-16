@@ -1,7 +1,7 @@
 /**
- * Catch-all front-door proxy: every path except /api/ping and /api/status
- * (static segments win over this dynamic route) is streamed to the current
- * active main's tunnel. (production_ready_plan_draft_v3 C8/A1)
+ * Catch-all front-door proxy. proxyRequest enforces the public client-API
+ * allowlist; operational paths such as /servers are never forwarded.
+ * (production_ready_plan_draft_v3 C8/A1)
  */
 
 const { proxyRequest } = require("../../lib/proxy");
