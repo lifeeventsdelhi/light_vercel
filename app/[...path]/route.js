@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 async function handle(request, { params }) {
-  const segments = Array.isArray(params?.path) ? params.path : [];
+  const resolvedParams = await params;
+  const segments = Array.isArray(resolvedParams?.path) ? resolvedParams.path : [];
   return proxyRequest(request, segments);
 }
 

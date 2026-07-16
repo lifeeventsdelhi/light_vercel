@@ -1,6 +1,5 @@
 # small-server watchdog (Vercel front door + failover)
 
-
 Public entry point + failover watchdog for the fleet
 (production_ready_plan_draft_v3 section C8).
 
@@ -13,14 +12,15 @@ Public entry point + failover watchdog for the fleet
   heartbeats + tunnel self-heal). Clients never see the tunnel URL.
 - **dns_switch mode (dormant until the domain is purchased):** the public
   hostname's CNAME is repointed between the two mains' fixed named-tunnel
-  hostnames via the Cloudflare API. Flip the comment in `lib/config.js`
-  (or set `FAILOVER_MODE=dns_switch` in the Vercel env).
+  hostnames via the Cloudflare API. Flip the two adjacent lines in
+  `lib/config.js`.
 - `/api/ping` — 1-minute liveness pings from the two mains
   (`scripts/watchdog_ping.sh`). Every ping evaluates the failover rules:
   - type_1 pings stale **> 3 min** → switch active_main to type_2
   - type_1 back with an uninterrupted **5 min** ping streak → switch back
 - `/api/status` — JSON status (mode, active_main, ping ages, cluster leader).
-  Set `STATUS_TOKEN` to require `Authorization: Bearer <token>`.
+  Tunnel URLs are redacted unless `STATUS_TOKEN` is configured and the request
+  sends `Authorization: Bearer <token>`.
 
 ## Deploy
 
@@ -29,7 +29,7 @@ Public entry point + failover watchdog for the fleet
    directory = `vercel`).
 2. Project env vars (Production):
    - `DATABASE_URL` — the SAME Neon pooled connection string the fleet uses
-   - `STATUS_TOKEN` — optional, protects `/api/status`
+   - `STATUS_TOKEN` — recommended; authorizes tunnel details on `/api/status`
 3. Deploy. Set `WATCHDOG_URL=https://<app>.vercel.app` in the two mains'
    `.env` (install.sh prompts for it) so their 1-minute ping cron flows.
 4. Point API clients at `https://<app>.vercel.app` — this URL never changes.
@@ -41,9 +41,12 @@ Public entry point + failover watchdog for the fleet
    CNAME (`api.<domain>` → `t1.<domain>`, proxied) once manually.
 2. Add Vercel env: `CF_API_TOKEN` (zone DNS edit), `CF_ZONE_ID`,
    `PUBLIC_HOSTNAME`, `T1_TUNNEL_HOSTNAME`, `T2_TUNNEL_HOSTNAME`.
-3. In `lib/config.js` comment the `front_door` line and uncomment
-   `dns_switch` (or set `FAILOVER_MODE=dns_switch` env var). Redeploy.
-4. Migrate clients to `https://api.<domain>` (one-time change).
+3. Set `TUNNEL_PUBLIC_URL=https://t1.<domain>` / `https://t2.<domain>` in the
+   corresponding main server's `.env`, so heartbeat and health checks use the
+   fixed named-tunnel hostname.
+4. In `lib/config.js` comment the `front_door` line and uncomment
+   `dns_switch`. Redeploy.
+5. Migrate clients to `https://api.<domain>` (one-time change).
 
 ## Manual failover (if Vercel or the watchdog is down)
 

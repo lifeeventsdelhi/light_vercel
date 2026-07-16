@@ -35,14 +35,22 @@ export async function POST(request) {
     console.warn(`[watchdog] rejected ping from '${serverId}' (unknown/disabled/bad key)`);
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+  if (!["main_server_type_1", "main_server_type_2"].includes(server.role)) {
+    console.warn(`[watchdog] rejected non-main ping from '${serverId}' role=${server.role}`);
+    return NextResponse.json({ error: "main server role required" }, { status: 403 });
+  }
 
   await state.recordPing(serverId);
 
-  let activeMain = null;
+  let activeMain;
   try {
     activeMain = await state.evaluate(server.role);
   } catch (err) {
     console.error(`[watchdog] evaluate failed: ${err.message}`);
+    return NextResponse.json(
+      { error: "failover evaluation failed" },
+      { status: 503 }
+    );
   }
 
   return NextResponse.json({
