@@ -1,5 +1,6 @@
 # small-server watchdog (Vercel front door + failover)
 
+
 Public entry point + failover watchdog for the fleet
 (production_ready_plan_draft_v3 section C8).
 
