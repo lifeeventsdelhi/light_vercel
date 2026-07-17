@@ -1,6 +1,6 @@
 /**
- * Catch-all front-door proxy. proxyRequest enforces the public client-API
- * allowlist; operational paths such as /servers are never forwarded.
+ * Catch-all front-door proxy. proxyRequest blocks the private /servers and
+ * /cluster trees and forwards every other path to the active main.
  * (production_ready_plan_draft_v3 C8/A1)
  */
 

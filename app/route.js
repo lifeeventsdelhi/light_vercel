@@ -1,7 +1,6 @@
 /**
  * Root-path front-door handler. The [...path] catch-all does not match the
- * empty path; proxyRequest rejects it because only client API prefixes are
- * public.
+ * empty path, so this route forwards "/" to the active main.
  */
 
 const { proxyRequest } = require("../lib/proxy");
