@@ -28,8 +28,15 @@ Public entry point + failover watchdog for the fleet
    (`cd vercel && npx vercel`, or import via the dashboard with root
    directory = `vercel`).
 2. Project env vars (Production):
-   - `DATABASE_URL` — the SAME Neon pooled connection string the fleet uses
+   - `DATABASE_URL` — the SAME Postgres connection string the fleet uses
+     (self-hosted litebill Postgres, not Neon — see lib/db.js)
    - `STATUS_TOKEN` — recommended; authorizes tunnel details on `/api/status`
+   In Vercel's key/value form, set the key to `DATABASE_URL` and paste only
+   the URL as its value. Do not include the literal `DATABASE_URL=` prefix.
+   The URL must include the database path, for example:
+   `postgresql://USER:PASSWORD@HOST:5432/litebill?sslmode=require`.
+   If importing an env file instead, the complete line is:
+   `DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/litebill?sslmode=require"`.
 3. Deploy. Set `WATCHDOG_URL=https://<app>.vercel.app` in the two mains'
    `.env` (install.sh prompts for it) so their 1-minute ping cron flows.
 4. Point API clients at `https://<app>.vercel.app` — this URL never changes.
